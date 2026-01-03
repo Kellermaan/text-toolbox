@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Toolbox - Text Processing Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .tool-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .tool-card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .tool-card p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            background: #e9ecef;
+        }
+
+        .upload-area.dragover {
+            background: #e7e9fc;
+            border-color: #764ba2;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .file-list {
+            margin-top: 20px;
+        }
+
+        .file-item {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-name {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .remove-file {
+            color: #dc3545;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📝 Text Toolbox</h1>
+            <p class="subtitle">Powerful Text Processing Tools</p>
+        </header>
+
+        <div class="tools-grid">
+            <!-- Markdown Merger Tool -->
+            <div class="tool-card">
+                <h2>📄 Markdown File Merger</h2>
+                <p>Merge multiple date-named Markdown files in chronological order into a single file</p>
+                
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <p>Drag and drop files here or click to select</p>
+                    <p style="font-size: 0.9em; color: #999;">Supports multiple .md files or .zip archives</p>
+                    <input type="file" id="fileInput" class="file-input" multiple accept=".md,.zip">
+                </div>
+
+                <div class="file-list" id="fileList"></div>
+
+                <button class="btn" id="mergeBtn" disabled>Start Merging</button>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Processing...</p>
+                </div>
+
+                <div class="message" id="message"></div>
+            </div>
+
+            <!-- More tools placeholder -->
+            <div class="tool-card" style="opacity: 0.6;">
+                <h2>🔧 More Tools</h2>
+                <p>More practical text processing tools coming soon...</p>
+                <ul style="text-align: left; margin-left: 20px; color: #666;">
+                    <li>Text format conversion</li>
+                    <li>Batch file renaming</li>
+                    <li>Text statistics and analysis</li>
+                    <li>Stay tuned...</li>
+                </ul>
+            </div>
+        </div>
+
+        <footer>
+            <p>© 2025 Text Toolbox | Making text processing easier</p>
+        </footer>
+    </div>
+
+    <script>
+        // Automatically detect API base URL
+        const API_BASE_URL = window.location.port === '8080' 
+            ? 'http://localhost:8000'  // Local development
+            : window.location.origin;   // Docker deployment
+        
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const mergeBtn = document.getElementById('mergeBtn');
+        const loading = document.getElementById('loading');
+        const message = document.getElementById('message');
+
+        let selectedFiles = [];
+
+        // Check backend connection on page load
+        async function checkBackendConnection() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                if (response.ok) {
+                    console.log('✅ Backend connected');
+                    return true;
+                }
+            } catch (error) {
+                console.error('❌ Backend not connected:', error);
+                showMessage(`Cannot connect to backend at ${API_BASE_URL}. Please start the backend server.`, 'error');
+                return false;
+            }
+        }
+
+        // Check connection when page loads
+        window.addEventListener('load', () => {
+            setTimeout(checkBackendConnection, 500);
+        });
+
+        // Click upload area to trigger file selection
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Prevent default drag behavior
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Drag highlight
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.remove('dragover');
+            }, false);
+        });
+
+        // Handle drag and drop files
+        uploadArea.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }, false);
+
+        // Handle file selection
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            selectedFiles = Array.from(files);
+            displayFiles();
+            mergeBtn.disabled = selectedFiles.length === 0;
+        }
+
+        function displayFiles() {
+            fileList.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <span class="file-name">${file.name}</span>
+                    <span class="remove-file" onclick="removeFile(${index})">×</span>
+                `;
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            displayFiles();
+            mergeBtn.disabled = selectedFiles.length === 0;
+        }
+
+        // Merge button click event
+        mergeBtn.addEventListener('click', async () => {
+            if (selectedFiles.length === 0) return;
+
+            // Check if it's a ZIP file
+            const isZip = selectedFiles.length === 1 && selectedFiles[0].name.endsWith('.zip');
+            
+            showLoading(true);
+            hideMessage();
+
+            try {
+                const formData = new FormData();
+                
+                if (isZip) {
+                    // ZIP file upload
+                    formData.append('file', selectedFiles[0]);
+                    const response = await fetch(`${API_BASE_URL}/api/tools/md-merger/zip`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.detail || 'Merge failed');
+                    }
+
+                    const blob = await response.blob();
+                    downloadFile(blob, response.headers.get('content-disposition'));
+                } else {
+                    // Multiple MD files upload
+                    selectedFiles.forEach(file => {
+                        formData.append('files', file);
+                    });
+
+                    const response = await fetch(`${API_BASE_URL}/api/tools/md-merger`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.detail || 'Merge failed');
+                    }
+
+                    const blob = await response.blob();
+                    downloadFile(blob, response.headers.get('content-disposition'));
+                }
+
+                showMessage('Merge successful! File downloaded.', 'success');
+                
+                // Clear file list
+                selectedFiles = [];
+                displayFiles();
+                fileInput.value = '';
+                mergeBtn.disabled = true;
+
+            } catch (error) {
+                console.error('Merge error:', error);
+                let errorMsg = 'Merge failed: ';
+                if (error.message === 'Failed to fetch') {
+                    errorMsg += 'Cannot connect to backend server. Please ensure the backend is running at ' + API_BASE_URL;
+                } else {
+                    errorMsg += error.message;
+                }
+                showMessage(errorMsg, 'error');
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        function showLoading(show) {
+            loading.classList.toggle('active', show);
+            mergeBtn.disabled = show;
+        }
+
+        function showMessage(text, type) {
+            message.textContent = text;
+            message.className = `message ${type}`;
+            setTimeout(() => {
+                hideMessage();
+            }, 5000);
+        }
+
+        function hideMessage() {
+            message.className = 'message';
+        }
+
+        function downloadFile(blob, contentDisposition) {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            
+            // Extract filename from content-disposition header
+            let filename = 'merged.md';
+            if (contentDisposition) {
+                const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
+                if (matches != null && matches[1]) {
+                    filename = matches[1].replace(/['"]/g, '');
+                }
+            }
+            
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+    </script>
+</body>
+</html>
